@@ -1,161 +1,138 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GustoCode</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gusto Code - Editor Web</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-  * { box-sizing: border-box; }
-  html, body { height:100%; margin:0; background:#1e1e1e; color:#d4d4d4; font-family:'Fira Code', monospace; display:flex; flex-direction:column; }
+  /* RESET E TIPOGRAFIA */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body, html { height: 100%; font-family: 'Fira Code', monospace; background-color: #1e1e2f; color: #fff; display: flex; flex-direction: column; }
 
-  #topbar {
-    height:40px; background:#333; display:flex; align-items:center; justify-content:space-between;
-    padding:0 10px; color:#fff; font-weight:bold; border-bottom:1px solid #444;
+  /* HEADER */
+  header {
+    height: 50px;
+    background-color: #252540;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 2px solid #3e3e5e;
   }
-  #topbar button {
-    background:#007acc; border:none; color:#fff; padding:6px 12px;
-    border-radius:4px; cursor:pointer; font-weight:bold; transition:0.3s;
+  header h1 { font-size: 18px; }
+
+  /* BOTÕES */
+  button {
+    background-color: #0e639c;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
   }
-  #topbar button:hover { background:#005fa3; }
+  button:hover { background-color: #1177bb; }
 
-  #container { flex:1; display:flex; min-height:0; }
-  #sidebar {
-    width:60px; background:#252526; display:flex; flex-direction:column;
-    align-items:center; padding-top:10px; border-right:1px solid #333;
+  /* CONTAINER PRINCIPAL */
+  #main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
   }
-  .icon {
-    width:30px; height:30px; margin:10px 0; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; color:#ccc;
-    transition:0.3s;
+
+  /* EDITOR */
+  #editor-container {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
   }
-  .icon:hover { color:#fff; }
+  #editor {
+    flex: 1;
+    border-right: 2px solid #3e3e5e;
+  }
 
-  #main { flex:1; display:flex; flex-direction:column; }
-  #tabs { height:30px; background:#2d2d2d; display:flex; align-items:center; padding:0 5px; border-bottom:1px solid #333; overflow-x:auto; }
-  .tab { padding:0 10px; cursor:pointer; color:#ccc; margin-right:5px; }
-  .tab.active { background:#1e1e1e; color:#fff; border-radius:3px; }
+  /* PAINEL DIREITO */
+  #right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #252540;
+    overflow: hidden;
+  }
 
-  #editor { flex:1; min-height:0; }
+  /* PREVIEW */
+  #preview {
+    flex: 1;
+    border-bottom: 2px solid #3e3e5e;
+    background-color: #fff;
+  }
 
+  /* TERMINAL */
   #terminal {
-    height:150px; background:#1e1e1e; border-top:1px solid #333;
+    flex: 1;
+    background-color: #1e1e2f;
+    color: #d4d4d4;
+    padding: 10px;
+    overflow-y: auto;
+    font-size: 14px;
+    border-top: 2px solid #3e3e5e;
   }
 
-  #statusbar {
-    height:25px; background:#007acc; color:white; display:flex; align-items:center; padding:0 10px; font-size:13px;
-  }
-
-  @media (max-width:700px){
-    #sidebar { width:50px; }
-    #topbar button { padding:4px 8px; font-size:12px; }
-    .tab { font-size:12px; }
+  /* RESPONSIVO */
+  @media(max-width: 1000px){
+    #main { flex-direction: column; }
+    #editor-container, #right-panel { flex: unset; height: 50%; }
   }
 </style>
 </head>
 <body>
-  <div id="topbar">
-    <span>🧠 GustoCode</span>
-    <button onclick="runCode()">▶ Executar</button>
+
+<header>
+  <h1>Gusto Code</h1>
+  <button id="run-button"><i class="fas fa-play"></i> Executar</button>
+</header>
+
+<div id="main">
+  <div id="editor-container">
+    <div id="editor"></div>
   </div>
 
-  <div id="container">
-    <div id="sidebar">
-      <div class="icon" title="Explorador">📁</div>
-      <div class="icon" title="Busca">🔍</div>
-      <div class="icon" title="Controle de Código">🧩</div>
-      <div class="icon" title="Execução">⚙️</div>
-      <div class="icon" title="Extensões">🧠</div>
-    </div>
-
-    <div id="main">
-      <div id="tabs"></div>
-      <div id="editor"></div>
-      <div id="terminal"></div>
-      <div id="statusbar">Conectado - GustoCode Web</div>
-    </div>
+  <div id="right-panel">
+    <iframe id="preview"></iframe>
+    <div id="terminal"></div>
   </div>
+</div>
 
-<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
-<script src="https://cdn.jsdelivr.net/pyodide/v0.23.2/full/pyodide.js"></script>
-
+<!-- MONACO EDITOR -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs/loader.js"></script>
 <script>
-let editor, term;
-let files = {
-  "index.html": "<!DOCTYPE html>\\n<html>\\n<body>\\n<h1>Olá, GustoCode!</h1>\\n</body>\\n</html>",
-  "style.css": "body { background:#fff; color:#000; }",
-  "script.js": "console.log('Olá, Augusto!');",
-  "python.py": "print('Olá do Python no GustoCode!')"
-};
-let currentFile = "index.html";
-
-require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }});
-require(["vs/editor/editor.main"], function() {
-  editor = monaco.editor.create(document.getElementById("editor"), {
-    value: files[currentFile],
-    language: "html",
-    theme: "vs-dark",
-    automaticLayout: true
-  });
-  createTabs();
+require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
+require(['vs/editor/editor.main'], function() {
+    window.editor = monaco.editor.create(document.getElementById('editor'), {
+        value: "// Escreva seu código aqui\n",
+        language: "javascript",
+        theme: "vs-dark",
+        automaticLayout: true
+    });
 });
 
-function createTabs(){
-  const tabs = document.getElementById("tabs");
-  tabs.innerHTML = "";
-  for(let f in files){
-    const tab = document.createElement("div");
-    tab.className = "tab" + (f===currentFile ? " active":"");
-    tab.textContent = f;
-    tab.onclick = ()=>openFile(f);
-    tabs.appendChild(tab);
-  }
-}
+// BOTÃO EXECUTAR (exemplo JS)
+document.getElementById('run-button').addEventListener('click', () => {
+    const code = editor.getValue();
+    const terminal = document.getElementById('terminal');
+    const preview = document.getElementById('preview');
 
-function openFile(name){
-  currentFile = name;
-  editor.setValue(files[name]);
-  let lang = "plaintext";
-  if(name.endsWith(".js")) lang="javascript";
-  else if(name.endsWith(".html")) lang="html";
-  else if(name.endsWith(".css")) lang="css";
-  else if(name.endsWith(".py")) lang="python";
-  monaco.editor.setModelLanguage(editor.getModel(), lang);
-  createTabs();
-}
-
-term = new Terminal({ theme: { background:"#1e1e1e", foreground:"#d4d4d4" } });
-term.open(document.getElementById("terminal"));
-term.writeln("🚀 Terminal do GustoCode pronto!");
-
-async function runCode(){
-  const code = editor.getValue();
-  if(currentFile.endsWith(".js")){
-    try{ eval(code); term.writeln("✅ JavaScript executado!"); }
-    catch(e){ term.writeln("❌ Erro JS: "+e); }
-  } else if(currentFile.endsWith(".html")){
-    const w = window.open();
-    w.document.write(code); w.document.close();
-    term.writeln("🌐 HTML aberto em nova aba!");
-  } else if(currentFile.endsWith(".css")){
-    const style = document.createElement("style");
-    style.textContent = code;
-    document.head.appendChild(style);
-    term.writeln("🎨 CSS aplicado!");
-  } else if(currentFile.endsWith(".py")){
-    term.writeln("🐍 Executando Python com Pyodide...");
-    if(!window.pyodide) pyodide = await loadPyodide();
+    // JS e HTML simples
     try {
-      const result = await pyodide.runPythonAsync(code);
-      term.writeln(result ?? "✅ Python executado!");
-    } catch(e){
-      term.writeln("❌ Erro Python: "+e);
+        preview.srcdoc = code;
+        terminal.innerHTML = "Código executado com sucesso!";
+    } catch (e) {
+        terminal.innerHTML = e;
     }
-  } else {
-    term.writeln("⚠️ Tipo de arquivo não suportado!");
-  }
-}
+});
 </script>
+
 </body>
-  </html>
+</html>
